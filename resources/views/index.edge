@@ -1,0 +1,192 @@
+@layout('layouts/layout')
+
+@section('content')
+<div class="row">
+	<div class="col-sm-6 col-md-4 col-md-offset-4">
+		<div class="account-wall">
+			<h1 class="text-center login-title">Registration</h1>
+			<div class="row m-l-15"><span class="text-{{ flashMessage('status') }}">{{ flashMessage('notification') }}</span></div>
+			<form novalidate class="form-signin needs-validation" method="POST" action="{{ route('UserController.store') }}" id="form-users">
+				{{ csrfField() }}
+				<div class="form-group">
+					<input type="text" name="mobile_number" id="mobile_number" class="form-control" placeholder="Mobile Number" maxlength="15" required autofocus>
+					<span class="help-block text-danger error-messages" style="display: none;" id="error-messages-pn"></span>
+					{{ elIf('<span class="help-block text-danger error-messages">$self</span>', getErrorFor('mobile_number'), hasErrorFor('mobile_number')) }}
+				</div>
+				<div class="form-group">
+					<input type="text" name="firstname" id="firstname" class="form-control" placeholder="First Name" required>
+					{{ elIf('<span class="help-block text-danger error-messages">$self</span>', getErrorFor('firstname'), hasErrorFor('firstname')) }}
+				</div>
+				<div class="form-group">
+					<input type="text" name="lastname" id="lastname" class="form-control" placeholder="Last Name" required>
+					{{ elIf('<span class="help-block text-danger error-messages">$self</span>', getErrorFor('lastname'), hasErrorFor('lastname')) }}
+				</div>
+				
+				<div class="form-group">
+					<small>Date of birth</small>
+					<div class="m-b-10 m-l-0">
+						<div>
+							<select class="form-control float-left " id="yearSelect">
+							</select>
+							<input type="hidden" name="year" id="year" value="">
+						</div>
+						<div>
+							<select class="form-control cal-fit-content float-left m-x-15" id="monthSelect">
+								<option value="1">1</option>
+								<option value="2">2</option>
+								<option value="3">3</option>
+								<option value="4">4</option>
+								<option value="5">5</option>
+								<option value="6">6</option>
+								<option value="7">7</option>
+								<option value="8">8</option>
+								<option value="9">9</option>
+								<option value="10">10</option>
+								<option value="11">11</option>
+								<option value="12">12</option>
+							</select>
+							<input type="hidden" name="month" id="month" value="">
+						</div>
+						<div>
+							<select class="form-control cal-fit-content float-left" id="daySelect">
+							</select>
+							<input type="hidden" name="day" id="day" value="">
+						</div>
+					</div>
+				</div>
+
+				<div class="form-group">
+					<div class="row m-b-10 m-t-60">
+						<label class="checkbox-inline"><input type="radio" name="genders" id="gender1" value="M">Male</label>
+						<label class="checkbox-inline"><input type="radio" name="genders" id="gender2" value="F">Female</label>
+					</div>
+					<input type="hidden" name="gender" id="gender" value="">
+				</div>
+
+				<div class="form-group">
+					<input type="email" name="email" id="email" class="form-control" placeholder="Email" required>
+					{{ elIf('<span class="help-block text-danger error-messages">$self</span>', getErrorFor('email'), hasErrorFor('email')) }}
+				</div>
+				
+				<button class="btn btn-lg btn-primary btn-block m-t-10" id="btn-register" type="submit">Register</button>
+			</form>
+		</div>
+		@if(flashMessage('status') == 'success')
+			<div class="row text-center m-t-10 m-b-20">
+				<a href="{{ route('UserController.getLogin') }}" class="btn btn-lg btn-primary btn-block m-t-10 btn-login">Login</a>
+			</div>
+		@endif
+	</div>
+</div>
+@endsection
+
+@section('script')
+<script type="text/javascript">
+	$(document).ready(function() {
+
+					console.log("{{ flashMessage('status') }}")
+
+		$('#mobile_number').keypress(function (e){
+			var charCode = (e.which) ? e.which : e.keyCode;
+			if (charCode > 31 && (charCode < 48 || charCode > 57)) {
+				return false;
+			}
+		});
+
+		$('#mobile_number').keyup(function (e){
+			if(this.value.length == 0) {
+				$('#error-messages-pn').css({"display":"none"})
+			}
+
+			if( this.value.length < 3 ) {
+				return
+			} else {
+				let substr = this.value.substring(0,2);
+				if(substr == '62' || substr == '08') {
+					return
+				} else {
+					$('#error-messages-pn').css({"display":"block"})
+					$('#error-messages-pn').text('Please enter valid Indonesian Phone Number')
+				}
+			}
+		});
+
+		$('#btn-register').on('click', function() {
+			$("#mobile_number").prop('readonly', true);
+			$("#firstname").prop('readonly', true);
+			$("#lastname").prop('readonly', true);
+			$("#email").prop('readonly', true);
+			$("#gender1").prop('disabled', true);
+			$("#gender2").prop('disabled', true);
+			$("select").prop('disabled', true);
+			var forms = document.getElementsByClassName('needs-validation');
+			var validation = Array.prototype.filter.call(forms, function(form) {
+				if (form.checkValidity() === false) {
+					form.classList.add('was-validated');
+				} else {
+					$("form[id*='form-users']").submit();
+				}
+			});
+		});
+
+		$("#gender1").on("change", function () {
+			$('#gender').val($(this).val())
+		});
+
+		$("#gender2").on("change", function () {
+			$('#gender').val($(this).val())
+		});
+	})
+</script>
+<script type="text/javascript">
+	$(function () {
+		BindYears();
+		$("#monthSelect").on("change", function () {
+			BindDays();
+			$('#month').val($(this).val())
+		});
+		$("#yearSelect").on("change", function () {
+			BindDays();
+			$('#year').val($(this).val())
+		});
+		$("#daySelect").on("change", function () {
+			$('#day').val($(this).val())
+		});
+		BindDays();
+	});
+
+	function BindYears() {
+		var yearDropDown = $('#yearSelect');
+		yearDropDown.empty();
+		let dt = new Date();
+		for(var x = 1960; x <= dt.getFullYear(); x++) {
+			yearDropDown.append("<option value=" + x + ">" + x + "</option>");
+		}
+	}
+
+	function BindDays() {
+		var month = $("#monthSelect").val();
+		var dayDropDown = $("#daySelect");
+		dayDropDown.empty();
+		if (month == 2) {
+			for (var i = 1; i <= 28; i++) {
+				dayDropDown.append("<option value=" + i + ">" + i + "</option>");
+			}
+			var year = $("#yearSelect").val();
+			if (parseInt(year) % 4 == 0) {
+				dayDropDown.append("<option value='29'>29</option>");
+			}
+		}
+		else if (month == 4 || month == 6 || month == 9 || month == 11) {
+			for (var i = 1; i <= 30; i++) {
+				dayDropDown.append("<option value=" + i + ">" + i + "</option>");
+			}
+		}
+		else {
+			for (var i = 1; i <= 31; i++) {
+				dayDropDown.append("<option value=" + i + ">" + i + "</option>");
+			}
+		}
+	}
+</script>
+@endsection
